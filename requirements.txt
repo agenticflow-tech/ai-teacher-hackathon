@@ -1,0 +1,6 @@
+streamlit
+pypdf
+python-docx
+google-generativeai
+edge-tts
+gTTS
