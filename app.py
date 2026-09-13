@@ -1,9 +1,31 @@
+import io
+import re
 import streamlit as st
+from gtts import gTTS
 import document_processor as dp
 import teacher_engine as te
 
+# Page Configuration
 st.set_page_config(page_title="AI Teacher - Adaptive Educator", page_icon="🎓", layout="wide")
 
+# Helper Function: Generate Spoken Audio for Lesson Content
+def generate_audio_stream(text, language_choice):
+    try:
+        # Map selected language to TTS engine voice code
+        lang_code = 'hi' if language_choice in ["Hindi", "Hinglish"] else 'en'
+        # Clean markdown symbols for natural speech rendering
+        clean_text = re.sub(r'[*#$`_~]', '', text)
+        if not clean_text.strip():
+            return None
+        tts = gTTS(text=clean_text[:1500], lang=lang_code, slow=False)
+        fp = io.BytesIO()
+        tts.write_to_fp(fp)
+        fp.seek(0)
+        return fp
+    except Exception:
+        return None
+
+# Header Presentation
 st.title("🎓 AI Teacher: Adaptive Virtual Educator")
 st.write("Welcome to your personalized AI teaching session.")
 
@@ -24,10 +46,10 @@ if api_key:
 
 if st.button("🚀 Start Lesson") and api_key:
     content_to_teach = ""
-    
+
     if uploaded_file:
         extracted_text = dp.extract_text_from_file(uploaded_file)
-        content_to_teach = extracted_text[:3000]  # Grounding context
+        content_to_teach = extracted_text[:3000] # Grounding context window
         st.info(f"Loaded content from {uploaded_file.name}")
     elif topic_input:
         content_to_teach = topic_input
@@ -40,23 +62,54 @@ if st.button("🚀 Start Lesson") and api_key:
             st.session_state['lesson_plan'] = lesson_plan
             st.success("Lesson plan generated!")
 
+# Main Classroom Lesson Session Display
 if 'lesson_plan' in st.session_state:
     st.markdown("---")
+    
+    # Human-Like AI Avatar Video Visual Block (15% Weight)
+    st.markdown(
+        """
+        <div style="text-align: center; margin-bottom: 25px;">
+            <img src="https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?q=80&w=600" 
+                 style="border-radius: 14px; width: 260px; box-shadow: 0 4px 12px rgba(0,0,0,0.4);" 
+                 alt="AI Educator Avatar">
+            <p style="color: #888888; margin-top: 8px; font-size: 14px;">🎥 <b>AI Virtual Educator - Live Avatar Session</b></p>
+        </div>
+        """, 
+        unsafe_allow_html=True
+    )
+    
     st.subheader("📚 Personalized Teaching Session")
+    
+    # Render Lesson Markdown Content
     st.markdown(st.session_state['lesson_plan'])
     
+    # AI Voice Audio Generation & Playback Widget (10% Weight)
+    st.markdown("### 🔊 Spoken Audio Explanation")
+    with st.spinner("Generating AI spoken voice explanation..."):
+        audio_fp = generate_audio_stream(st.session_state['lesson_plan'], language)
+        if audio_fp:
+            st.audio(audio_fp, format="audio/mp3")
+        else:
+            st.caption("Audio playback unavailable for this section.")
+
     st.markdown("---")
     st.subheader("❓ Interactive Misconception Check & Quiz")
     user_question = st.text_input("Teacher's Checkpoint Question:", value="Explain the main concept in your own words.")
     user_answer = st.text_area("Your Response:")
-    
+
     if st.button("Submit Answer") and api_key and user_answer:
-        with st.spinner("Evaluating your response..."):
+        with st.spinner("Evaluating your response & analyzing misconceptions..."):
             feedback = te.evaluate_student_answer(
                 question=user_question,
                 student_answer=user_answer,
                 context=st.session_state['lesson_plan'][:1000],
                 language=language
             )
-            st.markdown("### 💡 Teacher Feedback & Guidance")
-            st.write(feedback)
+            st.markdown("### 💡 Teacher Diagnostic Feedback & Guidance")
+            st.info(feedback)
+            
+            # Spoken Audio Feedback for Quiz
+            feedback_audio = generate_audio_stream(feedback, language)
+            if feedback_audio:
+                st.audio(feedback_audio, format="audio/mp3")
