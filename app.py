@@ -1,6 +1,7 @@
 import io
 import re
 import streamlit as st
+import streamlit.components.v1 as components
 from gtts import gTTS
 import document_processor as dp
 import teacher_engine as te
@@ -11,10 +12,8 @@ st.set_page_config(page_title="AI Teacher - Adaptive Educator", page_icon="🎓"
 # Helper Function: Generate Spoken Audio for Lesson Content
 def generate_audio_stream(text, language_choice):
     try:
-        # Map selected language to TTS engine voice code
         lang_code = 'hi' if language_choice in ["Hindi", "Hinglish"] else 'en'
-        # Clean markdown symbols for natural speech rendering
-        clean_text = re.sub(r'[*#$`_~]', '', text)
+        clean_text = re.sub(r'[*#`_~]', '', text)
         if not clean_text.strip():
             return None
         tts = gTTS(text=clean_text[:1500], lang=lang_code, slow=False)
@@ -46,16 +45,16 @@ if api_key:
 
 if st.button("🚀 Start Lesson") and api_key:
     content_to_teach = ""
-
+    
     if uploaded_file:
         extracted_text = dp.extract_text_from_file(uploaded_file)
-        content_to_teach = extracted_text[:3000] # Grounding context window
+        content_to_teach = extracted_text[:3000]
         st.info(f"Loaded content from {uploaded_file.name}")
     elif topic_input:
         content_to_teach = topic_input
     else:
         st.warning("Please upload a file or enter a topic.")
-
+        
     if content_to_teach:
         with st.spinner("Preparing your personalized lesson plan..."):
             lesson_plan = te.generate_lesson_plan(content_to_teach, level, time_available, language)
@@ -66,25 +65,12 @@ if st.button("🚀 Start Lesson") and api_key:
 if 'lesson_plan' in st.session_state:
     st.markdown("---")
     
-    # Human-Like AI Avatar Video Visual Block (15% Weight)
-    st.markdown(
-        """
-        <div style="text-align: center; margin-bottom: 25px;">
-            <img src="https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?q=80&w=600" 
-                 style="border-radius: 14px; width: 260px; box-shadow: 0 4px 12px rgba(0,0,0,0.4);" 
-                 alt="AI Educator Avatar">
-            <p style="color: #888888; margin-top: 8px; font-size: 14px;">🎥 <b>AI Virtual Educator - Live Avatar Session</b></p>
-        </div>
-        """, 
-        unsafe_allow_html=True
-    )
-    
-    st.subheader("📚 Personalized Teaching Session")
+    st.subheader("📖 Personalized Teaching Session")
     
     # Render Lesson Markdown Content
     st.markdown(st.session_state['lesson_plan'])
     
-    # AI Voice Audio Generation & Playback Widget (10% Weight)
+    # AI Voice Audio Generation & Playback Widget
     st.markdown("### 🔊 Spoken Audio Explanation")
     with st.spinner("Generating AI spoken voice explanation..."):
         audio_fp = generate_audio_stream(st.session_state['lesson_plan'], language)
@@ -113,8 +99,6 @@ if 'lesson_plan' in st.session_state:
             feedback_audio = generate_audio_stream(feedback, language)
             if feedback_audio:
                 st.audio(feedback_audio, format="audio/mp3")
-import streamlit as st
-import streamlit.components.v1 as components
 
 # Floating AI Teacher Avatar (Compact Mode)
 components.html(
