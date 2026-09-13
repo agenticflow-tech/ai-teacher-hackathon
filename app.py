@@ -113,3 +113,23 @@ if 'lesson_plan' in st.session_state:
             feedback_audio = generate_audio_stream(feedback, language)
             if feedback_audio:
                 st.audio(feedback_audio, format="audio/mp3")
+import streamlit as st
+import streamlit.components.v1 as components
+
+# Floating AI Teacher Avatar (Compact Mode)
+components.html(
+    """
+    <script type="module"
+      src="https://agent.d-id.com/v2/index.js"
+      data-mode="fabio"
+      data-client-key="ck_u1_ySW-cl5V8NRIAcl3NB"
+      data-agent-id="v2_agt_UJ5ust4q"
+      data-name="did-agent"
+      data-monitor="true"
+      data-orientation="horizontal"
+      data-position="right"
+      data-open-mode="compact">
+    </script>
+    """,
+    height=600,
+)
